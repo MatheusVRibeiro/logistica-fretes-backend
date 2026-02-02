@@ -1,13 +1,13 @@
 # Intelligent Logistics Backend
 
-Backend do zero para um sistema de Gestão de Logística e Fretes Inteligentes com Node.js, TypeScript, Express, Prisma e MySQL.
+Backend do zero para um sistema de Gestão de Logística e Fretes Inteligentes com Node.js, TypeScript, Express, SQL Puro e MySQL.
 
 ## 🚀 Stack Tecnológica
 
 - **Linguagem**: Node.js com TypeScript
 - **Framework**: Express.js
 - **Base de Dados**: MySQL (compatível com AWS RDS)
-- **ORM**: Prisma
+- **Banco de Dados**: SQL Puro com mysql2
 - **Autenticação**: JWT
 - **Validação**: Zod
 - **Hash de Senhas**: Bcrypt
@@ -16,9 +16,8 @@ Backend do zero para um sistema de Gestão de Logística e Fretes Inteligentes c
 
 ```
 src/
-├── database/          # Configuração do Prisma Client
+├── database/          # Configuração e conexão MySQL
 ├── middlewares/       # Auth JWT, Logger, Error Handler
-├── models/            # Schema Prisma
 ├── controllers/       # Controladores de requisições
 ├── services/          # Lógica de negócio
 ├── routes/            # Definição de endpoints
@@ -36,16 +35,19 @@ npm install
 
 2. Configure as variáveis de ambiente criando um arquivo `.env`:
 ```
-DATABASE_URL="mysql://user:password@localhost:3306/logistica_db"
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=logistica_db
 JWT_SECRET="seu_secret_key_aqui"
 JWT_EXPIRES_IN="7d"
 NODE_ENV="development"
 PORT=3000
 ```
 
-3. Execute as migrações do Prisma:
+3. Crie as tabelas no MySQL usando o schema:
 ```bash
-npm run prisma:migrate
+mysql -u root -p logistica_db < src/database/schema.sql
 ```
 
 4. Inicie o servidor em desenvolvimento:

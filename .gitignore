@@ -17,11 +17,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Prisma
-# Não ignore o schema.prisma, mas ignore o ficheiro de base de dados SQLite se usar localmente
-dev.db
-dev.db-journal
-
 # TypeScript
 tsbuildinfo
 

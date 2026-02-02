@@ -4,7 +4,7 @@
 
 1. Inicie o servidor: `npm run dev`
 2. Tenha MySQL rodando
-3. Execute as migrações: `npm run prisma:migrate` (se não feito)
+3. Execute o schema: `mysql -u root -p logistica_db < src/database/schema.sql` (se não feito)
 
 ---
 
@@ -97,13 +97,13 @@ curl -X GET http://localhost:3000/api/dashboard/estatisticas-rotas \
 
 ### Criar Motorista (necessário para frete)
 
-Primeiro, você precisa criar um motorista e um caminhão. Para isso, crie endpoints adicionais ou use Prisma Studio:
+Primeiro, você precisa criar um motorista e um caminhão. Para isso, use SQL direto ou crie endpoints adicionais:
 
 ```bash
-npm run prisma:studio
+mysql -u root -p logistica_db
+INSERT INTO motoristas (id, nome, cpf, telefone) VALUES ('unique-id', 'João', '12345678901', '11999999999');
+INSERT INTO caminhoes (id, placa, modelo, capacidade) VALUES ('unique-id-2', 'ABC1234', 'Volvo', 25.5);
 ```
-
-Isso abrirá uma GUI onde você pode inserir dados.
 
 ### 5. Listar fretes
 **Endpoint:** `GET /api/fretes`
@@ -252,9 +252,9 @@ curl http://localhost:3000/api/rota-inexistente
 
 2. **Use Postman/Insomnia** para testes mais organizados
 
-3. **Use Prisma Studio** para gerenciar dados:
+3. **Use SQL direto** para gerenciar dados:
    ```bash
-   npm run prisma:studio
+   mysql -u root -p logistica_db
    ```
 
 4. **Veja logs** no terminal onde npm run dev está rodando
@@ -268,8 +268,8 @@ curl http://localhost:3000/api/rota-inexistente
 - [ ] Login retorna token
 - [ ] KPIs acessível com token
 - [ ] Listar fretes (vazio inicialmente)
-- [ ] Criar motorista (via Prisma Studio)
-- [ ] Criar caminhão (via Prisma Studio)
+- [ ] Criar motorista (via SQL INSERT)
+- [ ] Criar caminhão (via SQL INSERT)
 - [ ] Criar frete com dados válidos
 - [ ] Listar fretes retorna o frete criado
 - [ ] Atualizar status de frete

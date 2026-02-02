@@ -13,7 +13,7 @@ O backend foi **completamente estruturado, configurado e compilado** com sucesso
 ### **Stack Tecnológico**
 - ✅ **Node.js + TypeScript** - Linguagem tipada
 - ✅ **Express.js** - Framework web
-- ✅ **Prisma ORM** - Gestão de dados
+- ✅ **SQL Puro com mysql2** - Gestão de dados
 - ✅ **MySQL** - Base de dados (compatível com AWS RDS)
 - ✅ **JWT** - Autenticação
 - ✅ **Bcrypt** - Hash de senhas
@@ -25,7 +25,7 @@ O backend foi **completamente estruturado, configurado e compilado** com sucesso
 ```
 logistica-fretes-backend/
 ├── src/
-│   ├── database/           # Configuração Prisma
+│   ├── database/           # Conexão MySQL e schema.sql
 │   ├── middlewares/        # Auth JWT, Error Handler
 │   ├── controllers/        # 3 controllers: Auth, Dashboard, Frete
 │   ├── services/           # 3 services com lógica de negócio
@@ -33,8 +33,6 @@ logistica-fretes-backend/
 │   ├── types/              # Tipos TypeScript
 │   ├── utils/              # Validadores Zod
 │   └── server.ts           # Arquivo principal
-├── prisma/
-│   └── schema.prisma       # 4 entidades: Usuario, Motorista, Caminhao, Frete
 ├── dist/                   # Build compilado ✅
 ├── package.json            # Dependências configuradas
 ├── tsconfig.json           # TypeScript configurado
@@ -107,16 +105,19 @@ Editar arquivo `.env` (já existe com template):
 ```env
 NODE_ENV=development
 PORT=3000
-DATABASE_URL="mysql://root:password@localhost:3306/logistica_db"
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=logistica_db
 JWT_SECRET="sua_chave_secreta_super_segura"
 JWT_EXPIRES_IN="7d"
 API_URL="http://localhost:3000"
 ```
 
-### **3. Executar Migrações Prisma**
+### **3. Executar Schema SQL**
 
 ```bash
-npm run prisma:migrate
+mysql -u root -p logistica_db < src/database/schema.sql
 ```
 
 Isso criará todas as tabelas no MySQL automaticamente.
@@ -171,9 +172,6 @@ npm run dev              # Desenvolver em tempo real
 npm run build            # Compilar TypeScript
 npm start                # Rodar versão compilada
 npm run type-check       # Verificar tipos TypeScript
-npm run prisma:generate  # Gerar Prisma Client
-npm run prisma:migrate   # Executar migrações
-npm run prisma:studio    # Abrir Prisma Studio (GUI para DB)
 ```
 
 ---
@@ -277,7 +275,7 @@ A API retorna automaticamente:
 |----------|---------|
 | "Connection refused" | Verificar se MySQL está rodando |
 | "Token inválido" | Incluir "Bearer " antes do JWT |
-| "Prisma Client not found" | Executar `npm run prisma:generate` |
+| "DUP_ENTRY" | Campo único duplicado, verificar dados |
 | "Port 3000 already in use" | Usar `PORT=3001 npm run dev` |
 
 ---
@@ -285,7 +283,7 @@ A API retorna automaticamente:
 ## 📞 Documentação Externa
 
 - [Express.js](https://expressjs.com)
-- [Prisma](https://www.prisma.io/docs)
+- [MySQL2](https://www.npmjs.com/package/mysql2)
 - [JWT](https://www.npmjs.com/package/jsonwebtoken)
 - [Zod](https://zod.dev)
 - [Bcrypt](https://www.npmjs.com/package/bcrypt)
@@ -295,16 +293,16 @@ A API retorna automaticamente:
 ## ✨ Status
 
 - **Projeto**: ✅ Criado
-- **Dependências**: ✅ Instaladas (196 packages)
+- **Dependências**: ✅ Instaladas
 - **TypeScript**: ✅ Compilado sem erros
 - **Build**: ✅ Gerado em `dist/`
-- **Prisma**: ✅ Configurado
+- **MySQL2**: ✅ Configurado
 - **Pronto para**: 🚀 Desenvolvimento
 
 ---
 
 **Versão**: 1.0.0  
-**Data**: Janeiro 27, 2026  
-**Status**: ✅ Pronto para usar!
+**Data**: Janeiro 28, 2026  
+**Status**: ✅ Pronto para usar (SQL Puro)!
 
 Para começar: `npm run dev` 🎉

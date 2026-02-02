@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import prisma from './database/prisma';
 import { errorHandler } from './middlewares/errorHandler';
 
 // Importar rotas
@@ -65,10 +64,6 @@ app.use(errorHandler);
 
 const startServer = async () => {
   try {
-    // Testar conexão com banco de dados
-    await prisma.$connect();
-    console.log('✅ Conectado ao banco de dados com sucesso');
-
     // Iniciar servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
@@ -83,7 +78,6 @@ const startServer = async () => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Encerrando servidor...');
-  await prisma.$disconnect();
   process.exit(0);
 });
 

@@ -9,7 +9,7 @@ O backend foi criado com sucesso! Toda a estrutura está pronta e compilada.
 ### 1. **Estrutura do Projeto**
 - ✅ `package.json` com todas as dependências
 - ✅ `tsconfig.json` configurado para TypeScript
-- ✅ Prisma schema com entidades: Usuario, Motorista, Caminhao, Frete
+- ✅ Schema SQL com entidades: Usuario, Motorista, Caminhao, Frete
 - ✅ Pasta `src/` com arquitetura MVC escalável
 
 ### 2. **Autenticação & Segurança**
@@ -19,8 +19,8 @@ O backend foi criado com sucesso! Toda a estrutura está pronta e compilada.
 - ✅ Error handler centralizado
 
 ### 3. **Base de Dados**
-- ✅ Schema Prisma com as 4 entidades principais
-- ✅ Relacionamentos configurados
+- ✅ Schema SQL com as 4 entidades principais
+- ✅ Relacionamentos com Foreign Keys
 - ✅ Enum para Status de Frete
 
 ### 4. **Serviços & Controllers**
@@ -66,19 +66,22 @@ O arquivo `.env` já foi criado com exemplo. Ajuste as variáveis se necessário
 ```env
 NODE_ENV=development
 PORT=3000
-DATABASE_URL="mysql://root:password@localhost:3306/logistica_db"
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=logistica_db
 JWT_SECRET="seu_secret_key_super_secreto_aqui_change_in_production"
 JWT_EXPIRES_IN="7d"
 API_URL="http://localhost:3000"
 ```
 
-### 3. **Executar Migrações Prisma**
+### 3. **Executar Schema SQL**
 
 ```bash
-npm run prisma:migrate
+mysql -u root -p logistica_db < src/database/schema.sql
 ```
 
-Isso irá criar as tabelas no banco de dados baseado no schema.
+Isso irá criar todas as tabelas no banco de dados.
 
 ### 4. **Iniciar Servidor em Desenvolvimento**
 
@@ -130,7 +133,8 @@ curl -X GET http://localhost:3000/api/dashboard/kpis \
 ```
 src/
 ├── database/
-│   └── prisma.ts           # Configuração Prisma Client
+│   ├── prisma.ts           # Pool de conexão MySQL2
+│   └── schema.sql          # Schema do banco de dados
 ├── middlewares/
 │   ├── auth.ts             # JWT authentication
 │   └── errorHandler.ts     # Error handling centralizado
@@ -164,15 +168,6 @@ npm run build
 
 # Iniciar versão compilada
 npm start
-
-# Gerar Prisma Client
-npm run prisma:generate
-
-# Criar migração
-npm run prisma:migrate
-
-# Acessar Prisma Studio (GUI)
-npm run prisma:studio
 
 # Verificar tipos TypeScript
 npm run type-check
@@ -211,14 +206,11 @@ npm run type-check
 - Certifique-se de incluir "Bearer " antes do token
 - Verifique se o JWT_SECRET está correto
 
-### Erro: "Prisma Client not generated"
-- Execute `npm run prisma:generate`
-
 ## 📞 Suporte
 
 Para mais informações:
 - Documentação Express: https://expressjs.com
-- Documentação Prisma: https://www.prisma.io/docs
+- Documentação MySQL2: https://www.npmjs.com/package/mysql2
 - Documentação JWT: https://www.npmjs.com/package/jsonwebtoken
 - Documentação Zod: https://zod.dev
 

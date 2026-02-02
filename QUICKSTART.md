@@ -28,14 +28,17 @@ docker run --name mysql-logistica \
 ### 3️⃣ Editar `.env`
 
 ```bash
-DATABASE_URL="mysql://root:password@localhost:3306/logistica_db"
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=logistica_db
 JWT_SECRET="chave_secreta_aqui"
 ```
 
-### 4️⃣ Executar Migrações
+### 4️⃣ Executar Schema SQL
 
 ```bash
-npm run prisma:migrate
+mysql -u root -p logistica_db < src/database/schema.sql
 ```
 
 ### 5️⃣ Iniciar Servidor
@@ -79,7 +82,7 @@ curl -X GET http://localhost:3000/api/dashboard/kpis \
 | Arquivo | Descrição |
 |---------|-----------|
 | `src/server.ts` | Entrada principal da aplicação |
-| `prisma/schema.prisma` | Modelo de dados |
+| `src/database/schema.sql` | Modelo de dados |
 | `src/services/` | Lógica de negócio |
 | `src/controllers/` | Handlers de requisições |
 | `src/routes/` | Definição de endpoints |
@@ -97,7 +100,7 @@ curl -X GET http://localhost:3000/api/dashboard/kpis \
 → `PORT=3001 npm run dev`
 
 **Erro: "JWT not found"**
-→ `npm run prisma:generate`
+→ Incluir `Authorization: Bearer` no header
 
 ---
 
