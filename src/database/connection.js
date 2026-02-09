@@ -10,11 +10,11 @@ const mysql = require('mysql2/promise');
 // ⚙️ CRIA O POOL DE CONEXÕES
 // ======================================================
 const pool = mysql.createPool({
-  host: process.env.BD_SERVIDOR,
-  port: process.env.BD_PORTA || 3306,
-  user: process.env.BD_USUARIO,
-  password: process.env.BD_SENHA?.replace(/"/g, ""), // remove aspas acidentais do .env
-  database: process.env.BD_BANCO,
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'password',
+  database: process.env.DB_NAME || 'logistica_db',
   waitForConnections: true,
   connectionLimit: 10,   // número máximo de conexões simultâneas
   queueLimit: 0,

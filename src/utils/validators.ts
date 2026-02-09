@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+const cpfSchema = z
+  .string()
+  .regex(/^(\d{3}\.\d{3}\.\d{3}-\d{2}|\d{11})$/, 'CPF invalido');
+
 // ==================== AUTENTICAÇÃO ====================
 export const LoginSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -17,56 +21,301 @@ export const CriarUsuarioSchema = z.object({
 
 export type CriarUsuarioInput = z.infer<typeof CriarUsuarioSchema>;
 
+export const CriarUsuarioAdminSchema = z
+  .object({
+    id: z.string().min(1).optional(),
+    nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+    email: z.string().email('Email inválido'),
+    senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres').optional(),
+    senha_hash: z.string().min(10).optional(),
+    role: z.enum(['admin', 'contabilidade', 'operador']).optional(),
+    ativo: z.boolean().optional(),
+    telefone: z.string().min(8).optional(),
+    cpf: cpfSchema.optional(),
+  })
+  .refine((data) => data.senha || data.senha_hash, {
+    message: 'Senha ou senha_hash sao obrigatorios',
+    path: ['senha'],
+  });
+
+export type CriarUsuarioAdminInput = z.infer<typeof CriarUsuarioAdminSchema>;
+
+export const AtualizarUsuarioSchema = z
+  .object({
+    nome: z.string().min(3).optional(),
+    email: z.string().email('Email inválido').optional(),
+    senha: z.string().min(6).optional(),
+    senha_hash: z.string().min(10).optional(),
+    role: z.enum(['admin', 'contabilidade', 'operador']).optional(),
+    ativo: z.boolean().optional(),
+    telefone: z.string().min(8).optional(),
+    cpf: cpfSchema.optional(),
+    ultimo_acesso: z.string().optional(),
+    tentativas_login_falhas: z.number().int().nonnegative().optional(),
+    bloqueado_ate: z.string().optional(),
+    token_recuperacao: z.string().optional(),
+    token_expiracao: z.string().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Informe ao menos um campo para atualizar',
+  });
+
+export type AtualizarUsuarioInput = z.infer<typeof AtualizarUsuarioSchema>;
+
 // ==================== MOTORISTA ====================
 export const CriarMotoristaSchema = z.object({
+  id: z.string().min(1).optional(),
   nome: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  cpf: z.string().regex(/^\d{11}$/, 'CPF deve conter 11 dígitos'),
+  cpf: cpfSchema,
   telefone: z.string().min(10, 'Telefone inválido'),
+  email: z.string().email('Email inválido'),
+  endereco: z.string().optional(),
+  cnh: z.string().min(5, 'CNH inválida'),
+  cnh_validade: z.string().min(1, 'CNH validade obrigatoria'),
+  cnh_categoria: z.string().min(1, 'Categoria CNH obrigatoria'),
+  status: z.enum(['ativo', 'inativo', 'ferias']).optional(),
+  tipo: z.enum(['proprio', 'terceirizado']),
+  data_admissao: z.string().min(1, 'Data de admissao obrigatoria'),
+  data_desligamento: z.string().optional(),
+  tipo_pagamento: z.enum(['pix', 'transferencia_bancaria']).optional(),
+  chave_pix_tipo: z.enum(['cpf', 'email', 'telefone', 'aleatoria']).optional(),
+  chave_pix: z.string().optional(),
+  banco: z.string().optional(),
+  agencia: z.string().optional(),
+  conta: z.string().optional(),
+  tipo_conta: z.enum(['corrente', 'poupanca']).optional(),
+  receita_gerada: z.number().nonnegative().optional(),
+  viagens_realizadas: z.number().int().nonnegative().optional(),
+  caminhao_atual: z.string().optional(),
 });
 
 export type CriarMotoristaInput = z.infer<typeof CriarMotoristaSchema>;
 
-export const AtualizarMotoristaSchema = CriarMotoristaSchema.partial();
+export const AtualizarMotoristaSchema = CriarMotoristaSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
 
 export type AtualizarMotoristaInput = z.infer<typeof AtualizarMotoristaSchema>;
 
 // ==================== CAMINHÃO ====================
 export const CriarCaminhaoSchema = z.object({
+  id: z.string().min(1).optional(),
   placa: z.string().regex(/^[A-Z]{3}-?\d{4}$/, 'Placa inválida'),
+  placa_carreta: z.string().optional(),
   modelo: z.string().min(3, 'Modelo deve ter pelo menos 3 caracteres'),
-  capacidade: z.number().positive('Capacidade deve ser maior que 0'),
+  ano_fabricacao: z.number().int().positive(),
+  status: z.enum(['disponivel', 'em_viagem', 'manutencao']).optional(),
+  motorista_fixo_id: z.string().optional(),
+  capacidade_toneladas: z.number().positive('Capacidade deve ser maior que 0'),
+  km_atual: z.number().int().nonnegative().optional(),
+  tipo_combustivel: z.enum(['DIESEL', 'S10', 'ARLA', 'OUTRO']).optional(),
+  tipo_veiculo: z.enum(['TRUCADO', 'TOCO', 'CARRETA', 'BITREM', 'RODOTREM']),
+  renavam: z.string().optional(),
+  renavam_carreta: z.string().optional(),
+  chassi: z.string().optional(),
+  registro_antt: z.string().optional(),
+  validade_seguro: z.string().optional(),
+  validade_licenciamento: z.string().optional(),
+  proprietario_tipo: z.enum(['PROPRIO', 'TERCEIRO', 'AGREGADO']).optional(),
+  ultima_manutencao_data: z.string().optional(),
+  proxima_manutencao_km: z.number().int().nonnegative().optional(),
 });
 
 export type CriarCaminhaoInput = z.infer<typeof CriarCaminhaoSchema>;
 
-export const AtualizarCaminhaoSchema = CriarCaminhaoSchema.partial();
+export const AtualizarCaminhaoSchema = CriarCaminhaoSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
 
 export type AtualizarCaminhaoInput = z.infer<typeof AtualizarCaminhaoSchema>;
 
 // ==================== FRETE ====================
 export const CriarFreteSchema = z.object({
+  id: z.string().min(1).optional(),
   origem: z.string().min(3, 'Origem deve ter pelo menos 3 caracteres'),
   destino: z.string().min(3, 'Destino deve ter pelo menos 3 caracteres'),
-  receita: z.number().positive('Receita deve ser maior que 0'),
-  custos: z.number().positive('Custos devem ser maior que 0'),
-  motoristaId: z.string().cuid('ID do motorista inválido'),
-  caminhaoId: z.string().cuid('ID do caminhão inválido'),
-  descricao: z.string().optional(),
-  dataPartida: z.string().datetime().optional(),
-  dataChegada: z.string().datetime().optional(),
+  motorista_id: z.string().min(1),
+  motorista_nome: z.string().min(3),
+  caminhao_id: z.string().min(1),
+  caminhao_placa: z.string().min(5),
+  fazenda_id: z.string().optional(),
+  fazenda_nome: z.string().optional(),
+  mercadoria: z.string().min(1),
+  mercadoria_id: z.string().optional(),
+  variedade: z.string().optional(),
+  data_frete: z.string().min(1),
+  quantidade_sacas: z.number().int().positive(),
+  toneladas: z.number().positive(),
+  valor_por_tonelada: z.number().positive(),
+  receita: z.number().positive().optional(),
+  custos: z.number().nonnegative().optional(),
+  resultado: z.number().optional(),
+  pagamento_id: z.string().optional(),
 });
 
 export type CriarFreteInput = z.infer<typeof CriarFreteSchema>;
 
-export const AtualizarFreteSchema = z.object({
-  origem: z.string().min(3).optional(),
-  destino: z.string().min(3).optional(),
-  status: z.enum(['PENDENTE', 'EM_TRANSITO', 'CONCLUIDO', 'CANCELADO']).optional(),
-  receita: z.number().positive().optional(),
-  custos: z.number().positive().optional(),
-  descricao: z.string().optional(),
-  dataPartida: z.string().datetime().optional(),
-  dataChegada: z.string().datetime().optional(),
-});
+export const AtualizarFreteSchema = z
+  .object({
+    origem: z.string().min(3).optional(),
+    destino: z.string().min(3).optional(),
+    motorista_id: z.string().min(1).optional(),
+    motorista_nome: z.string().min(3).optional(),
+    caminhao_id: z.string().min(1).optional(),
+    caminhao_placa: z.string().min(5).optional(),
+    fazenda_id: z.string().optional(),
+    fazenda_nome: z.string().optional(),
+    mercadoria: z.string().min(1).optional(),
+    mercadoria_id: z.string().optional(),
+    variedade: z.string().optional(),
+    data_frete: z.string().min(1).optional(),
+    quantidade_sacas: z.number().int().positive().optional(),
+    toneladas: z.number().positive().optional(),
+    valor_por_tonelada: z.number().positive().optional(),
+    receita: z.number().positive().optional(),
+    custos: z.number().nonnegative().optional(),
+    resultado: z.number().optional(),
+    pagamento_id: z.string().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'Informe ao menos um campo para atualizar',
+  });
 
 export type AtualizarFreteInput = z.infer<typeof AtualizarFreteSchema>;
+
+// ==================== FAZENDA ====================
+export const CriarFazendaSchema = z.object({
+  id: z.string().min(1).optional(),
+  fazenda: z.string().min(3),
+  localizacao: z.string().min(3),
+  proprietario: z.string().min(3),
+  mercadoria: z.string().min(1),
+  variedade: z.string().optional(),
+  safra: z.string().min(4),
+  preco_por_tonelada: z.number().positive(),
+  peso_medio_saca: z.number().positive().optional(),
+  total_sacas_carregadas: z.number().int().nonnegative().optional(),
+  total_toneladas: z.number().nonnegative().optional(),
+  faturamento_total: z.number().nonnegative().optional(),
+  ultimo_frete: z.string().optional(),
+  colheita_finalizada: z.boolean().optional(),
+});
+
+export type CriarFazendaInput = z.infer<typeof CriarFazendaSchema>;
+
+export const AtualizarFazendaSchema = CriarFazendaSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
+
+export type AtualizarFazendaInput = z.infer<typeof AtualizarFazendaSchema>;
+
+// ==================== CUSTO ====================
+export const CriarCustoSchema = z.object({
+  id: z.string().min(1).optional(),
+  frete_id: z.string().min(1),
+  tipo: z.enum(['combustivel', 'manutencao', 'pedagio', 'outros']),
+  descricao: z.string().min(3),
+  valor: z.number().positive(),
+  data: z.string().min(1),
+  comprovante: z.boolean().optional(),
+  observacoes: z.string().optional(),
+  motorista: z.string().optional(),
+  caminhao: z.string().optional(),
+  rota: z.string().optional(),
+  litros: z.number().positive().optional(),
+  tipo_combustivel: z.enum(['gasolina', 'diesel', 'etanol', 'gnv']).optional(),
+});
+
+export type CriarCustoInput = z.infer<typeof CriarCustoSchema>;
+
+export const AtualizarCustoSchema = CriarCustoSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
+
+export type AtualizarCustoInput = z.infer<typeof AtualizarCustoSchema>;
+
+// ==================== PAGAMENTO ====================
+export const CriarPagamentoSchema = z.object({
+  id: z.string().min(1).optional(),
+  motorista_id: z.string().min(1),
+  motorista_nome: z.string().min(3),
+  periodo_fretes: z.string().min(3),
+  quantidade_fretes: z.number().int().positive(),
+  fretes_incluidos: z.string().optional(),
+  total_toneladas: z.number().positive(),
+  valor_por_tonelada: z.number().positive(),
+  valor_total: z.number().positive(),
+  data_pagamento: z.string().min(1),
+  status: z.enum(['pendente', 'processando', 'pago', 'cancelado']).optional(),
+  metodo_pagamento: z.enum(['pix', 'transferencia_bancaria']),
+  comprovante_nome: z.string().optional(),
+  comprovante_url: z.string().optional(),
+  comprovante_data_upload: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+export type CriarPagamentoInput = z.infer<typeof CriarPagamentoSchema>;
+
+export const AtualizarPagamentoSchema = CriarPagamentoSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
+
+export type AtualizarPagamentoInput = z.infer<typeof AtualizarPagamentoSchema>;
+
+// ==================== NOTA FISCAL ====================
+export const CriarNotaFiscalSchema = z.object({
+  id: z.string().min(1).optional(),
+  frete_id: z.string().min(1),
+  motorista_id: z.string().min(1),
+  numero_nf: z.number().int().positive(),
+  serie_nf: z.string().min(1).optional(),
+  data_emissao: z.string().min(1),
+  data_saida: z.string().optional(),
+  data_entrega: z.string().optional(),
+  mercadoria: z.string().min(1),
+  quantidade_sacas: z.number().int().positive(),
+  toneladas: z.number().positive(),
+  origem: z.string().min(2),
+  destino: z.string().min(2),
+  valor_bruto: z.number().positive(),
+  icms_aliquota: z.number().positive().optional(),
+  icms_valor: z.number().nonnegative().optional(),
+  valor_liquido: z.number().nonnegative().optional(),
+  status: z.enum(['emitida', 'cancelada', 'devolvida']).optional(),
+  chave_acesso: z.string().length(44).optional(),
+  arquivo_pdf: z.string().optional(),
+  arquivo_xml: z.string().optional(),
+  observacoes: z.string().optional(),
+});
+
+export type CriarNotaFiscalInput = z.infer<typeof CriarNotaFiscalSchema>;
+
+export const AtualizarNotaFiscalSchema = CriarNotaFiscalSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
+
+export type AtualizarNotaFiscalInput = z.infer<typeof AtualizarNotaFiscalSchema>;
+
+// ==================== LOCAIS DE ENTREGA ====================
+export const CriarLocalEntregaSchema = z.object({
+  id: z.string().min(1).optional(),
+  nome: z.string().min(3),
+  cidade: z.string().min(2),
+  estado: z.string().length(2),
+  ativo: z.boolean().optional(),
+});
+
+export type CriarLocalEntregaInput = z.infer<typeof CriarLocalEntregaSchema>;
+
+export const AtualizarLocalEntregaSchema = CriarLocalEntregaSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  { message: 'Informe ao menos um campo para atualizar' }
+);
+
+export type AtualizarLocalEntregaInput = z.infer<typeof AtualizarLocalEntregaSchema>;

@@ -8,6 +8,14 @@ import { errorHandler } from './middlewares/errorHandler';
 import authRoutes from './routes/authRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import freteRoutes from './routes/freteRoutes';
+import usuarioRoutes from './routes/usuarioRoutes';
+import motoristaRoutes from './routes/motoristaRoutes';
+import frotaRoutes from './routes/frotaRoutes';
+import fazendaRoutes from './routes/fazendaRoutes';
+import custoRoutes from './routes/custoRoutes';
+import pagamentoRoutes from './routes/pagamentoRoutes';
+import notaFiscalRoutes from './routes/notaFiscalRoutes';
+import locaisEntregaRoutes from './routes/locaisEntregaRoutes';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -47,6 +55,14 @@ app.get('/health', (_req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/fretes', freteRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/motoristas', motoristaRoutes);
+app.use('/api/frota', frotaRoutes);
+app.use('/api/fazendas', fazendaRoutes);
+app.use('/api/custos', custoRoutes);
+app.use('/api/pagamentos', pagamentoRoutes);
+app.use('/api/notas-fiscais', notaFiscalRoutes);
+app.use('/api/locais-entrega', locaisEntregaRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
