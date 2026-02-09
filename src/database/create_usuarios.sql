@@ -111,10 +111,10 @@ ON DUPLICATE KEY UPDATE
 -- SET tentativas_login_falhas = tentativas_login_falhas + 1
 -- WHERE email = 'admin@rnlogistica.com';
 
--- Bloquear usuário após 5 tentativas falhas (exemplo: bloquear por 30 minutos)
+-- Bloquear usuário após 8 tentativas falhas (bloqueio por 15 minutos)
 -- UPDATE usuarios
--- SET bloqueado_ate = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 MINUTE)
--- WHERE email = 'admin@rnlogistica.com' AND tentativas_login_falhas >= 5;
+-- SET bloqueado_ate = DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 15 MINUTE)
+-- WHERE email = 'admin@rnlogistica.com' AND tentativas_login_falhas >= 8;
 
 -- Desbloquear usuário (manual ou após expiração automática)
 -- UPDATE usuarios

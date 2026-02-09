@@ -25,63 +25,151 @@ O backend foi **completamente estruturado, configurado e compilado** com sucesso
 ```
 logistica-fretes-backend/
 ├── src/
-│   ├── database/           # Conexão MySQL e schema.sql
+│   ├── database/           # Conexão MySQL e init_database.sql
 │   ├── middlewares/        # Auth JWT, Error Handler
-│   ├── controllers/        # 3 controllers: Auth, Dashboard, Frete
-│   ├── services/           # 3 services com lógica de negócio
-│   ├── routes/             # 3 rotas: auth, dashboard, fretes
+│   ├── controllers/        # 10 controllers: Auth, Dashboard, Frete, Motorista, Frota, Fazenda, Custo, Pagamento, Usuario, LocaisEntrega
+│   ├── routes/             # 10 arquivos de rotas
 │   ├── types/              # Tipos TypeScript
-│   ├── utils/              # Validadores Zod
+│   ├── utils/              # Validadores Zod, ID generator, SQL helpers
 │   └── server.ts           # Arquivo principal
 ├── dist/                   # Build compilado ✅
 ├── package.json            # Dependências configuradas
 ├── tsconfig.json           # TypeScript configurado
 ├── .env                    # Variáveis de ambiente
-└── README.md + SETUP.md    # Documentação
+└── README.md               # Documentação
 ```
 
 ---
 
-## 🗄️ Entidades do Banco de Dados
+## 🗄️ Entidades do Banco de Dados (Modelo Atualizado)
 
-### **Usuario**
-- id, nome, email (único), senha (bcrypt), ativo, timestamps
+### **usuarios**
+- id, nome, email (único), senha_hash (bcrypt), role (admin/operador/contabilidade)
+- ativo, telefone, cpf, ultimo_acesso, tentativas_login_falhas
+- token_recuperacao, timestamps
 
-### **Motorista**
-- id, nome, CPF (único), telefone, ativo, timestamps
+### **motoristas**
+- id, nome, cpf (único), telefone, email, endereco
+- cnh, cnh_validade, cnh_categoria, status (ativo/inativo/ferias)
+- tipo (proprio/terceirizado), data_admissao, data_desligamento
+- tipo_pagamento, chave_pix, banco, agencia, conta
+- receita_gerada, viagens_realizadas, caminhao_atual
 
-### **Caminhão**
-- id, placa (única), modelo, capacidade (toneladas), ativo, timestamps
+### **Frota** (caminhões)
+- id, placa (única), placa_carreta, modelo, ano_fabricacao
+- status (disponivel/em_viagem/manutencao), motorista_fixo_id
+- capacidade_toneladas, km_atual, tipo_combustivel, tipo_veiculo
+- renavam, chassi, registro_antt, validade_seguro, proprietario_tipo
 
-### **Frete**
-- id, origem, destino, status (enum), receita, custos, resultado (calculado)
-- Relacionamentos com Motorista e Caminhão
-- Timestamps: createdAt, updatedAt, dataPartida, dataChegada
+### **fazendas**
+- id, fazenda (nome), localizacao, proprietario, mercadoria, variedade
+- safra, preco_por_tonelada, peso_medio_saca
+- total_sacas_carregadas, total_toneladas, faturamento_total
+- ultimo_frete, colheita_finalizada
+
+### **fretes**
+- id, origem, destino, motorista_id, motorista_nome
+- caminhao_id, caminhao_placa, fazenda_id, fazenda_nome
+- mercadoria, variedade, data_frete, quantidade_sacas, toneladas
+- valor_por_tonelada, receita, custos, resultado, pagamento_id
+
+### **custos**
+- id, frete_id, tipo (combustivel/manutencao/pedagio/outros)
+- descricao, valor, data, comprovante, observacoes
+- motorista, caminhao, rota, litros, tipo_combustivel
+
+### **pagamentos**
+- id, motorista_id, motorista_nome, periodo_fretes
+- quantidade_fretes, fretes_incluidos, total_toneladas
+- valor_por_tonelada, valor_total, data_pagamento
+- status (pendente/processando/pago/cancelado), metodo_pagamento
+- comprovante_nome, comprovante_url, observacoes
+
+> **Nota:** `notas_fiscais` e `locais_entrega` foram removidas do schema atual
 
 ---
 
-## 🔌 Endpoints da API
+## 🔌 Endpoints da API (Rotas Simples - sem /api)
 
-### **Autenticação**
+### **Autenticação (conveniência)**
 ```
-POST   /api/auth/login          - Login (retorna JWT)
-POST   /api/auth/registrar      - Registro novo usuário
+GET    /login                  - Mensagem instrutiva
+POST   /login                  - Login (retorna JWT)
+POST   /registrar              - Registro novo usuário
+POST   /auth/login             - Alternativa com prefixo /auth
+POST   /auth/registrar         - Alternativa com prefixo /auth
 ```
 
 ### **Dashboard**
 ```
-GET    /api/dashboard/kpis                - KPIs (Receita, Custos, Lucro, Margem)
-GET    /api/dashboard/estatisticas-rotas  - Análise de rentabilidade por rota
+GET    /dashboard/kpis                    - KPIs (Receita, Custos, Lucro, Margem)
+GET    /dashboard/estatisticas-rotas      - Análise de rentabilidade por rota
+```
+
+### **Fazendas (CRUD)**
+```
+GET    /fazendas               - Listar todas as fazendas
+GET    /fazendas/:id           - Obter fazenda específica
+POST   /fazendas               - Criar fazenda (validação Zod)
+PUT    /fazendas/:id           - Atualizar fazenda
+DELETE /fazendas/:id           - Deletar fazenda
+```
+
+### **Motoristas (CRUD)**
+```
+GET    /motoristas             - Listar motoristas
+GET    /motoristas/:id         - Obter motorista específico
+POST   /motoristas             - Criar motorista
+PUT    /motoristas/:id         - Atualizar motorista
+DELETE /motoristas/:id         - Deletar motorista
+```
+
+### **Frota/Caminhões (CRUD)**
+```
+GET    /frota                  - Listar frota
+GET    /frota/:id              - Obter veículo específico
+POST   /frota                  - Criar veículo
+PUT    /frota/:id              - Atualizar veículo
+DELETE /frota/:id              - Deletar veículo
 ```
 
 ### **Fretes (CRUD)**
 ```
-GET    /api/fretes                  - Listar com paginação e filtros
-GET    /api/fretes/:id              - Obter frete específico
-POST   /api/fretes                  - Criar frete (validação Zod)
-PUT    /api/fretes/:id              - Atualizar frete
-DELETE /api/fretes/:id              - Deletar frete
+GET    /fretes                 - Listar fretes
+GET    /fretes/:id             - Obter frete específico
+POST   /fretes                 - Criar frete (validação Zod)
+PUT    /fretes/:id             - Atualizar frete
+DELETE /fretes/:id             - Deletar frete
 ```
+
+### **Custos (CRUD)**
+```
+GET    /custos                 - Listar custos
+GET    /custos/:id             - Obter custo específico
+POST   /custos                 - Criar custo
+PUT    /custos/:id             - Atualizar custo
+DELETE /custos/:id             - Deletar custo
+```
+
+### **Pagamentos (CRUD)**
+```
+GET    /pagamentos             - Listar pagamentos
+GET    /pagamentos/:id         - Obter pagamento específico
+POST   /pagamentos             - Criar pagamento
+PUT    /pagamentos/:id         - Atualizar pagamento
+DELETE /pagamentos/:id         - Deletar pagamento
+```
+
+### **Usuários (CRUD)**
+```
+GET    /usuarios               - Listar usuários
+GET    /usuarios/:id           - Obter usuário específico
+POST   /usuarios               - Criar usuário
+PUT    /usuarios/:id           - Atualizar usuário
+DELETE /usuarios/:id           - Deletar usuário
+```
+
+> **IMPORTANTE:** Todas as rotas (exceto `/login` e `/registrar`) exigem autenticação JWT via header `Authorization: Bearer <token>`
 
 ---
 
@@ -142,7 +230,7 @@ Servidor rodará em `http://localhost:3000`
 curl http://localhost:3000/health
 
 # Registrar usuário
-curl -X POST http://localhost:3000/api/auth/registrar \
+curl -X POST http://localhost:3000/registrar \
   -H "Content-Type: application/json" \
   -d '{
     "nome": "João Silva",
@@ -151,7 +239,7 @@ curl -X POST http://localhost:3000/api/auth/registrar \
   }'
 
 # Login (pega JWT)
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:3000/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "joao@example.com",
@@ -159,7 +247,15 @@ curl -X POST http://localhost:3000/api/auth/login \
   }'
 
 # Usar JWT para acessar Dashboard
-curl -X GET http://localhost:3000/api/dashboard/kpis \
+curl -X GET http://localhost:3000/dashboard/kpis \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+
+# Listar fazendas (protegido)
+curl -X GET http://localhost:3000/fazendas \
+  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+
+# Listar motoristas (protegido)
+curl -X GET http://localhost:3000/motoristas \
   -H "Authorization: Bearer SEU_TOKEN_AQUI"
 ```
 

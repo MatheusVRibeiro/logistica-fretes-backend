@@ -14,8 +14,7 @@ import frotaRoutes from './routes/frotaRoutes';
 import fazendaRoutes from './routes/fazendaRoutes';
 import custoRoutes from './routes/custoRoutes';
 import pagamentoRoutes from './routes/pagamentoRoutes';
-import notaFiscalRoutes from './routes/notaFiscalRoutes';
-import locaisEntregaRoutes from './routes/locaisEntregaRoutes';
+import { AuthController } from './controllers';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -25,11 +24,29 @@ const PORT = process.env.PORT || 3000;
 
 // ==================== MIDDLEWARES ====================
 
-// CORS
+// CORS - Permitir múltiplas origens para desenvolvimento
+const allowedOrigins = [
+  'http://localhost:3000',        // Painel Web
+  'http://localhost:8081',        // Expo Web (React Native)
+  'http://localhost:5173',        // Vite default
+  'http://192.168.0.174:8081',    // Expo Web na rede local
+  'http://192.168.0.174:19006',   // Expo Dev Server alternativo
+];
+
 app.use(
   cors({
-    origin: process.env.API_URL || '*',
+    origin: (origin, callback) => {
+      // Permitir requisições sem origin (mobile apps, Postman, etc)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 
@@ -42,6 +59,11 @@ app.use(morgan('combined'));
 
 // ==================== ROTAS ====================
 
+// Rota raiz
+app.get('/', (_req: Request, res: Response) => {
+  res.send('Hello World');
+});
+
 // Health Check
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
@@ -51,18 +73,28 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
-// Rotas da API
-app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/fretes', freteRoutes);
-app.use('/api/usuarios', usuarioRoutes);
-app.use('/api/motoristas', motoristaRoutes);
-app.use('/api/frota', frotaRoutes);
-app.use('/api/fazendas', fazendaRoutes);
-app.use('/api/custos', custoRoutes);
-app.use('/api/pagamentos', pagamentoRoutes);
-app.use('/api/notas-fiscais', notaFiscalRoutes);
-app.use('/api/locais-entrega', locaisEntregaRoutes);
+// Rotas (sem /api prefix) — rotas simples e conveniência
+// Conveniência: atalhos públicos para usar com formulários simples
+const authController = new AuthController();
+app.get('/login', (_req: Request, res: Response) => {
+  res.json({ success: true, message: 'Use POST /login or POST /auth/login to authenticate' });
+});
+app.post('/login', (req: Request, res: Response) => authController.login(req, res));
+app.post('/registrar', (req: Request, res: Response) => authController.registrar(req, res));
+
+// Auth routes (mounted at /auth if needed)
+app.use('/auth', authRoutes);
+
+// Primary app routes (base paths)
+app.use('/dashboard', dashboardRoutes);
+app.use('/fretes', freteRoutes);
+app.use('/usuarios', usuarioRoutes);
+app.use('/motoristas', motoristaRoutes);
+app.use('/frota', frotaRoutes);
+app.use('/fazendas', fazendaRoutes);
+app.use('/custos', custoRoutes);
+app.use('/pagamentos', pagamentoRoutes);
+// Nota: `locaisEntrega` não está disponível no schema atual, rota não registrada
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

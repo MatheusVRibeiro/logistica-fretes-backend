@@ -2,11 +2,12 @@
   "name": "logistica-fretes-backend",
   "version": "1.0.0",
   "description": "Backend para Sistema de Gestão de Logística e Fretes Inteligentes",
-  "main": "dist/server.js",
+  "main": "index.js",
   "scripts": {
     "dev": "ts-node src/server.ts",
+    "dev:js": "npm run build && node index.js",
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node index.js",
     "lint": "eslint src/**/*.ts",
     "type-check": "tsc --noEmit"
   },
