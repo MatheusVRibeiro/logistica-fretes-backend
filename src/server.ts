@@ -25,7 +25,7 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // ==================== MIDDLEWARES ====================
 
-// CORS - Permitir múltiplas origens para desenvolvimento e produção
+// CORS - Configuração simplificada para produção e desenvolvimento
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8081';
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -35,8 +35,9 @@ const allowedOrigins = [
   'http://localhost:5173',        // Vite default
   'http://192.168.0.174:8081',    // Expo Web na rede local
   'http://192.168.0.174:19006',   // Expo Dev Server alternativo
+  'https://agrotrack-frontend-ep3b.onrender.com', // Frontend no Render (URL correta)
+  'https://agrotrack-frontend.onrender.com', // Frontend no Render (URL antiga)
   frontendUrl,                    // URL do Frontend (do .env)
-  'https://agrotrack-frontend.onrender.com', // Frontend no Render (produção)
 ];
 
 app.use(
