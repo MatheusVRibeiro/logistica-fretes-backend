@@ -11,7 +11,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "postinstall": "npm run build",
-    "start": "node dist/server.js",
+    "start": "dist/server.js",
     "dev:js": "npm run build && node dist/server.js",
     "lint": "eslint \"src/**/*.ts\"",
     "type-check": "tsc --noEmit"
