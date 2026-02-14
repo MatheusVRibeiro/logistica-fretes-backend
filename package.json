@@ -8,6 +8,7 @@
     "dev:js": "npm run build && node dist/server.js",
     "build": "tsc",
     "start": "node dist/server.js",
+    "postinstall": "npm run build",
     "lint": "eslint src/**/*.ts",
     "type-check": "tsc --noEmit"
   },
@@ -36,11 +37,12 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
-    "@types/node": "^20.19.33"
+    "@types/node": "^20.19.33",
+    "typescript": "^5.0.0"
   },
   "devDependencies": {
     "ts-node": "^10.9.1",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    
   }
 }
