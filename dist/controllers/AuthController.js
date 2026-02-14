@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthController = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const zod_1 = require("zod");
 const connection_1 = __importDefault(require("../database/connection"));
 const auth_1 = require("../middlewares/auth");
@@ -29,7 +29,7 @@ class AuthController {
                 return;
             }
             console.log('🔐 [REGISTER] Gerando hash da senha...');
-            const senhaHash = await bcrypt_1.default.hash(data.senha, 10);
+            const senhaHash = await bcryptjs_1.default.hash(data.senha, 10);
             const id = (0, id_1.generateId)('USR');
             console.log('🆔 [REGISTER] ID gerado:', id);
             await connection_1.default.execute('INSERT INTO usuarios (id, nome, email, senha_hash) VALUES (?, ?, ?, ?)', [id, data.nome, data.email, senhaHash]);
@@ -89,7 +89,7 @@ class AuthController {
                 return;
             }
             console.log('🔑 [LOGIN] Comparando senha...');
-            const valid = await bcrypt_1.default.compare(data.senha, user.senha_hash);
+            const valid = await bcryptjs_1.default.compare(data.senha, user.senha_hash);
             console.log('🔑 [LOGIN] Senha válida:', valid);
             if (!valid) {
                 console.log('❌ [LOGIN] Senha incorreta para:', data.email);

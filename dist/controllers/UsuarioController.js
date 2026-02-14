@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsuarioController = void 0;
-const bcrypt_1 = __importDefault(require("bcrypt"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const zod_1 = require("zod");
 const connection_1 = __importDefault(require("../database/connection"));
 const id_1 = require("../utils/id");
@@ -71,7 +71,7 @@ class UsuarioController {
             const payload = validators_1.CriarUsuarioAdminSchema.parse(req.body);
             let senhaHash = payload.senha_hash;
             if (!senhaHash && payload.senha) {
-                senhaHash = await bcrypt_1.default.hash(payload.senha, 10);
+                senhaHash = await bcryptjs_1.default.hash(payload.senha, 10);
             }
             // Higienização automática: Remove formatação antes de salvar
             const cpfLimpo = payload.cpf ? payload.cpf.replace(/\D/g, '') : null;
@@ -130,7 +130,7 @@ class UsuarioController {
             const { id } = req.params;
             const payload = validators_1.AtualizarUsuarioSchema.parse(req.body);
             if (payload.senha) {
-                payload.senha_hash = await bcrypt_1.default.hash(payload.senha, 10);
+                payload.senha_hash = await bcryptjs_1.default.hash(payload.senha, 10);
             }
             const { fields, values } = (0, sql_1.buildUpdate)(payload, USUARIO_FIELDS);
             if (fields.length === 0) {
