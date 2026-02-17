@@ -67,9 +67,8 @@ export class CustoController {
   async criar(req: Request, res: Response): Promise<void> {
     try {
       const payload = CriarCustoSchema.parse(req.body);
-      // ID será gerado pelo MySQL, ajuste a lógica conforme padrão dos outros controllers
-
       const connection = await pool.getConnection();
+      let codigo: string = '';
       try {
         await connection.beginTransaction();
 
@@ -87,13 +86,13 @@ export class CustoController {
           return;
         }
 
-        await connection.execute(
+        // 1. INSERT sem ID manual
+        const [result]: any = await connection.execute(
           `INSERT INTO custos (
-            id, frete_id, tipo, descricao, valor, data, comprovante,
+            frete_id, tipo, descricao, valor, data, comprovante,
             observacoes, motorista, caminhao, rota, litros, tipo_combustivel
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
-            id,
             payload.frete_id,
             payload.tipo,
             payload.descricao,
@@ -108,6 +107,11 @@ export class CustoController {
             payload.tipo_combustivel || null,
           ]
         );
+        const insertId = result.insertId;
+        // 2. Geração da sigla/código
+        const ano = new Date().getFullYear();
+        codigo = `CUSTO-${ano}-${String(insertId).padStart(3, '0')}`;
+        await connection.execute('UPDATE custos SET id = ? WHERE id = ?', [codigo, insertId]);
 
         await connection.execute(
           `UPDATE fretes
@@ -118,18 +122,19 @@ export class CustoController {
         );
 
         await connection.commit();
+
+        res.status(201).json({
+          success: true,
+          message: 'Custo criado com sucesso',
+          data: { id: codigo },
+        } as ApiResponse<{ id: string }>);
+        return;
       } catch (transactionError) {
         await connection.rollback();
         throw transactionError;
       } finally {
         connection.release();
       }
-
-      res.status(201).json({
-        success: true,
-        message: 'Custo criado com sucesso',
-        data: { id },
-      } as ApiResponse<{ id: string }>);
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({
