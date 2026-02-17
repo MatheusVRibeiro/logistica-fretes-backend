@@ -36,6 +36,10 @@ const allowedOrigins = [
   'http://192.168.0.174:8081',    // Expo Web na rede local
   'http://192.168.0.174:19006',   // Expo Dev Server alternativo
   frontendUrl,                    // URL do Frontend (do .env)
+  // Produção
+  'https://caramellologistica.com',
+  'https://www.caramellologistica.com',
+  'https://api.caramellologistica.com',
 ];
 
 app.use(
@@ -67,9 +71,21 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: ['Authorization'],
-    optionsSuccessStatus: 200,
+    optionsSuccessStatus: 204,
   })
 );
+
+// Garantir resposta para preflight em todas as rotas
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    return allowedOrigins.includes(origin) ? callback(null, true) : callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204
+}));
 
 // Body Parser
 app.use(express.json());
