@@ -106,9 +106,12 @@ export class AuthController {
       const data = LoginSchema.parse(req.body);
       console.log('✅ [LOGIN] Validação Zod passou - Email:', data.email);
 
+      // Normalizar email para evitar divergências por espaços/maiúsculas
+      const email = String(data.email).trim().toLowerCase();
+
       const [rows] = await pool.execute(
-        'SELECT id, nome, email, senha_hash, tentativas_login_falhas, bloqueado_ate FROM usuarios WHERE email = ? LIMIT 1',
-        [data.email]
+        'SELECT id, nome, email, senha_hash, tentativas_login_falhas, bloqueado_ate, ativo FROM usuarios WHERE email = ? LIMIT 1',
+        [email]
       );
 
       const users = rows as Array<{ 
@@ -131,6 +134,22 @@ export class AuthController {
       }
 
       const user = users[0];
+      // Garantir que o usuário exista e tenha hash de senha
+      if (!user || !user.senha_hash) {
+        console.log('❌ [LOGIN] Usuário sem hash de senha ou inexistente:', email);
+        res.status(401).json({
+          success: false,
+          message: 'Credenciais invalidas',
+        } as ApiResponse<null>);
+        return;
+      }
+
+      // Rejeitar usuários inativos
+      if ('ativo' in user && user.ativo === 0) {
+        console.log('🔒 [LOGIN] Tentativa de login em usuário inativo:', email);
+        res.status(403).json({ success: false, message: 'Conta inativa' } as ApiResponse<null>);
+        return;
+      }
       console.log('👤 [LOGIN] Usuário encontrado:', { id: user.id, email: user.email, nome: user.nome });
       console.log('🔒 [LOGIN] Tentativas falhas:', user.tentativas_login_falhas);
       console.log('🔒 [LOGIN] Bloqueado até:', user.bloqueado_ate);
@@ -147,9 +166,15 @@ export class AuthController {
       }
       
       console.log('🔑 [LOGIN] Comparando senha...');
-      const valid = await bcrypt.compare(data.senha, user.senha_hash);
+      let valid = false;
+      try {
+        valid = await bcrypt.compare(data.senha, user.senha_hash);
+      } catch (cmpErr) {
+        console.error('⚠️ [LOGIN] Erro ao comparar senhas:', cmpErr);
+        valid = false;
+      }
       console.log('🔑 [LOGIN] Senha válida:', valid);
-      
+
       if (!valid) {
         console.log('❌ [LOGIN] Senha incorreta para:', data.email);
         
