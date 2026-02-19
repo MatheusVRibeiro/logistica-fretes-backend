@@ -314,10 +314,14 @@ export class FazendaController {
         return;
       }
 
-      // Incrementar o volume transportado (total_toneladas)
+      // Incrementar volume, sacas e faturamento acumulados
       await pool.execute(
-        'UPDATE fazendas SET total_toneladas = total_toneladas + ? WHERE id = ?',
-        [payload.toneladas, id]
+        `UPDATE fazendas
+         SET total_toneladas = COALESCE(total_toneladas, 0) + ?,
+             total_sacas_carregadas = COALESCE(total_sacas_carregadas, 0) + ?,
+             faturamento_total = COALESCE(faturamento_total, 0) + ?
+         WHERE id = ?`,
+        [payload.toneladas, payload.quantidadeSacas || 0, payload.receitaTotal || 0, id]
       );
 
       // Buscar fazenda atualizada

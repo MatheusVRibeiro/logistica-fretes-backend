@@ -318,6 +318,8 @@ export type AtualizarFazendaInput = z.infer<typeof AtualizarFazendaSchema>;
 
 export const IncrementarVolumeSchema = z.object({
   toneladas: z.number().positive('Toneladas deve ser um número positivo'),
+  quantidadeSacas: z.number().int().nonnegative().optional(),
+  receitaTotal: z.number().nonnegative().optional(),
 });
 
 export type IncrementarVolumeInput = z.infer<typeof IncrementarVolumeSchema>;

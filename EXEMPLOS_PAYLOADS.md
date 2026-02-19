@@ -225,18 +225,6 @@ PUT /api/notas-fiscais/:id
 }
 ```
 
-## Locais de entrega
-
-POST /api/locais-entrega
-```json
-{
-  "nome": "Filial 1, Tupa",
-  "cidade": "Tupa",
-  "estado": "SP",
-  "ativo": true
-}
-```
-
 PUT /api/locais-entrega/:id
 ```json
 {
