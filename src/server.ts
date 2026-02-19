@@ -7,7 +7,6 @@ import { errorHandler } from './middlewares/errorHandler';
 
 // Importar rotas
 import authRoutes from './routes/authRoutes';
-import { loginLimiter } from './middlewares/rateLimiter';
 import dashboardRoutes from './routes/dashboardRoutes';
 import freteRoutes from './routes/freteRoutes';
 import usuarioRoutes from './routes/usuarioRoutes';
@@ -16,7 +15,6 @@ import frotaRoutes from './routes/frotaRoutes';
 import fazendaRoutes from './routes/fazendaRoutes';
 import custoRoutes from './routes/custoRoutes';
 import pagamentoRoutes from './routes/pagamentoRoutes';
-import locaisEntregaRoutes from './routes/locaisEntregaRoutes';
 import { AuthController } from './controllers';
 
 // Carregar variáveis de ambiente
@@ -121,7 +119,7 @@ const authController = new AuthController();
 app.get('/login', (_req: Request, res: Response) => {
   res.json({ success: true, message: 'Use POST /login or POST /auth/login to authenticate' });
 });
-app.post('/login', loginLimiter, (req: Request, res: Response) => authController.login(req, res));
+app.post('/login', (req: Request, res: Response) => authController.login(req, res));
 app.post('/registrar', (req: Request, res: Response) => authController.registrar(req, res));
 
 // Auth routes (mounted at /auth if needed)
@@ -135,10 +133,8 @@ app.use('/motoristas', motoristaRoutes);
 app.use('/frota', frotaRoutes);
 app.use('/fazendas', fazendaRoutes);
 app.use('/custos', custoRoutes);
-app.use('/pagamentos', pagamentoRoutes);
-// Nota: `locaisEntrega` não está disponível no schema atual, rota não registrada
-// Rotas de locais de entrega
-app.use('/locais-entrega', locaisEntregaRoutes);
+app.use('/pagamentos', pagamentoRoutes);// Nota: `locaisEntrega` não está disponível no schema atual, rota não registrada
+
 // 404 Handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({

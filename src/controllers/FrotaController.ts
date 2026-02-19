@@ -39,6 +39,29 @@ export class FrotaController {
             return;
         }
 
+        // Filter by motorista_fixo_id if provided
+        if (_req.query.motorista_fixo_id) {
+          const motoristaId = Number(_req.query.motorista_fixo_id);
+
+          if (Number.isNaN(motoristaId)) {
+            res.status(400).json({
+              success: false,
+              message: 'motorista_fixo_id invalido',
+            } as ApiResponse<null>);
+            return;
+          }
+
+          const sqlMotorista = `
+            SELECT id, placa, placa_carreta, modelo, tipo_veiculo, status
+            FROM frota
+            WHERE motorista_fixo_id = ?
+            ORDER BY placa ASC
+          `;
+          const [rows] = await pool.execute(sqlMotorista, [motoristaId]);
+          res.json({ success: true, data: rows } as ApiResponse<unknown>);
+          return;
+        }
+
         const [rows] = await pool.execute('SELECT * FROM frota ORDER BY created_at DESC');
         res.json({
           success: true,
@@ -85,22 +108,33 @@ export class FrotaController {
       console.log('[FROTA][CRIAR][REQ.BODY]', req.body);
       const cleaned = normalizeCaminhaoPayload(req.body);
       console.log('[FROTA][CRIAR][NORMALIZADO]', cleaned);
+      console.log('[FROTA][CRIAR][TIPOS]', {
+        placa: typeof cleaned.placa,
+        modelo: typeof cleaned.modelo,
+        tipo_veiculo: typeof cleaned.tipo_veiculo,
+        status: typeof cleaned.status,
+        km_atual: typeof cleaned.km_atual,
+      });
       const payload = CriarCaminhaoSchema.parse(cleaned as any);
       console.log('[FROTA][CRIAR][PAYLOAD]', payload);
+      
+      // Aplicar valores padrão
+      const tipoVeiculo = payload.tipo_veiculo;
+      const status = payload.status || 'disponivel';
+      const tipoCombustivel = payload.tipo_combustivel || 'S10';
+      const kmAtual = payload.km_atual ?? null;
+      const proprietarioTipo = payload.proprietario_tipo || 'PROPRIO';
+      
       const carretaTypes = ['CARRETA', 'BITREM', 'RODOTREM'];
 
       // Se o tipo de veiculo exige carreta, placa_carreta é obrigatoria
-      if (carretaTypes.includes(payload.tipo_veiculo) && !payload.placa_carreta) {
+      if (carretaTypes.includes(tipoVeiculo) && !payload.placa_carreta) {
         res.status(400).json({
           success: false,
           message: 'Placa da carreta obrigatoria para o tipo de veiculo selecionado',
         } as ApiResponse<null>);
         return;
       }
-      const status = payload.status || 'disponivel';
-      const tipoCombustivel = payload.tipo_combustivel || 'S10';
-      const kmAtual = payload.km_atual ?? null;
-      const proprietarioTipo = payload.proprietario_tipo || 'PROPRIO';
 
       const conn = await pool.getConnection();
       try {
@@ -118,11 +152,11 @@ export class FrotaController {
           payload.modelo,
           payload.ano_fabricacao ?? null,
           status,
-          payload.motorista_fixo_id || null,
+          payload.motorista_fixo_id ? Number(payload.motorista_fixo_id) : null,
           payload.capacidade_toneladas ?? null,
           kmAtual,
           tipoCombustivel,
-          payload.tipo_veiculo,
+          tipoVeiculo,
           payload.renavam || null,
           payload.renavam_carreta || null,
           payload.chassi || null,
@@ -136,25 +170,26 @@ export class FrotaController {
         const [result]: any = await conn.execute(insertSql, insertParams);
         const insertId = result.insertId;
 
-        // 2. Geração da sigla/código
+        // 2. Gerar código_veiculo único
         const ano = new Date().getFullYear();
-        const codigo = `FROTA-${ano}-${String(insertId).padStart(3, '0')}`;
-        await conn.execute('UPDATE frota SET id = ? WHERE id = ?', [codigo, insertId]);
+        const codigoVeiculo = `VEI-${ano}-${String(insertId).padStart(3, '0')}`;
+        await conn.execute('UPDATE frota SET codigo_veiculo = ? WHERE id = ?', [codigoVeiculo, insertId]);
 
         await conn.commit();
-
-        console.log('[FROTA][CRIAR][RESULT]', { id: codigo });
+        console.log('[FROTA][CRIAR][SUCCESS]', { id: insertId, codigo_veiculo: codigoVeiculo });
         res.status(201).json({
           success: true,
           message: 'Veiculo criado com sucesso',
-          data: { id: codigo },
-        } as ApiResponse<{ id: string }>);
+          data: { id: insertId, codigo_veiculo: codigoVeiculo },
+        } as ApiResponse<{ id: number; codigo_veiculo: string }>);
         return;
       } catch (txError) {
         await conn.rollback();
+        console.error('[FROTA][CRIAR][TX_ERROR]', txError);
         res.status(500).json({
           success: false,
           message: 'Erro ao criar veiculo (transação).',
+          error: String(txError),
         } as ApiResponse<null>);
         return;
       } finally {
@@ -162,10 +197,12 @@ export class FrotaController {
       }
     } catch (error) {
       if (error instanceof ZodError) {
+        const messages = error.errors.map((err) => `${err.path.join('.')}: ${err.message}`).join('; ');
+        console.error('[FROTA][CRIAR][VALIDATION_ERROR]', messages);
         res.status(400).json({
           success: false,
           message: 'Dados invalidos',
-          error: error.errors.map((err) => err.message).join('; '),
+          error: messages,
         } as ApiResponse<null>);
         return;
       }

@@ -7,4 +7,3 @@ export { FreteController } from './FreteController';
 export { CustoController } from './CustoController';
 export { PagamentoController } from './PagamentoController';
 export { DashboardController } from './DashboardController';
-export { LocaisEntregaController } from './LocaisEntregaController';

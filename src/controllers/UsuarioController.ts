@@ -142,7 +142,7 @@ export class UsuarioController {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'ER_DUP_ENTRY') {
         const message = String(error).includes('email') 
           ? 'Este e-mail já está cadastrado no sistema.'
-          : String(error).includes('cpf') || String(error).includes('documento')
+          : String(error).includes('documento')
           ? 'Este documento já está cadastrado no sistema.'
           : 'Dados duplicados. Verifique e-mail ou documento.';
         

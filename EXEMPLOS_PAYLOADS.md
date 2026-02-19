@@ -101,7 +101,7 @@ POST /api/fazendas
 ```json
 {
   "fazenda": "Fazenda Santa Esperanca",
-  "localizacao": "Marilia, SP",
+  "estado": "SP",
   "proprietario": "Joao Silva",
   "mercadoria": "Amendoim",
   "safra": "2024/2025",

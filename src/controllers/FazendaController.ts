@@ -7,7 +7,7 @@ import { AtualizarFazendaSchema, CriarFazendaSchema, IncrementarVolumeSchema } f
 
 const FAZENDA_FIELDS = [
   'fazenda',
-  'localizacao',
+  'estado',
   'proprietario',
   'mercadoria',
   'variedade',
@@ -150,7 +150,9 @@ export class FazendaController {
 
   async criar(req: Request, res: Response): Promise<void> {
     try {
+      console.log('[FAZENDA][CRIAR][REQ.BODY]', req.body);
       const payload = CriarFazendaSchema.parse(req.body);
+      console.log('[FAZENDA][CRIAR][PAYLOAD]', payload);
       const pesoMedioSaca = payload.peso_medio_saca !== undefined ? payload.peso_medio_saca : 25.0;
       const colheitaFinalizada = payload.colheita_finalizada !== undefined ? payload.colheita_finalizada : false;
 
@@ -159,13 +161,13 @@ export class FazendaController {
         await conn.beginTransaction();
         // 1. INSERT sem ID manual
         const insertSql = `INSERT INTO fazendas (
-          fazenda, localizacao, proprietario, mercadoria, variedade, safra,
+          fazenda, estado, proprietario, mercadoria, variedade, safra,
           preco_por_tonelada, peso_medio_saca, total_sacas_carregadas, total_toneladas,
           faturamento_total, ultimo_frete, colheita_finalizada
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const insertParams = [
           payload.fazenda,
-          payload.localizacao,
+          payload.estado,
           payload.proprietario,
           payload.mercadoria,
           payload.variedade || null,
@@ -184,15 +186,15 @@ export class FazendaController {
         // 2. Geração da sigla/código
         const ano = new Date().getFullYear();
         const codigo = `FAZ-${ano}-${String(insertId).padStart(3, '0')}`;
-        await conn.execute('UPDATE fazendas SET id = ? WHERE id = ?', [codigo, insertId]);
+        await conn.execute('UPDATE fazendas SET codigo_fazenda = ? WHERE id = ?', [codigo, insertId]);
 
         await conn.commit();
 
         res.status(201).json({
           success: true,
           message: 'Fazenda criada com sucesso',
-          data: { id: codigo },
-        } as ApiResponse<{ id: string }>);
+          data: { id: insertId, codigo_fazenda: codigo },
+        } as ApiResponse<{ id: number; codigo_fazenda: string }>);
         return;
       } catch (txError) {
         await conn.rollback();

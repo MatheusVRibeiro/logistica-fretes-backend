@@ -142,7 +142,7 @@ export const CriarMotoristaSchema = z.object({
   data_admissao: z.string().min(1, 'Data de admissao obrigatoria').optional().nullable(),
   data_desligamento: z.string().optional(),
   tipo_pagamento: z.enum(['pix', 'transferencia_bancaria']),
-  chave_pix_tipo: z.enum(['cpf', 'email', 'telefone', 'aleatoria']).optional(),
+  chave_pix_tipo: z.enum(['cpf', 'email', 'telefone', 'aleatoria', 'cnpj']).optional(),
   chave_pix: z.string().optional().nullable(),
   banco: z.string().optional().nullable(),
   agencia: z.string().optional().nullable(),
@@ -187,7 +187,7 @@ export const CriarCaminhaoSchema = z.object({
   ano_fabricacao: z.number().int().positive().optional().nullable(),
   status: z.enum(['disponivel', 'em_viagem', 'manutencao']).optional(),
   motorista_fixo_id: IdSchema.optional(),
-  capacidade_toneladas: z.number().positive('Capacidade deve ser maior que 0').optional().nullable(),
+  capacidade_toneladas: z.nullable(z.number().positive('Capacidade deve ser maior que 0')).optional(),
   km_atual: z.number().int().nonnegative().optional(),
   tipo_combustivel: z.enum(['DIESEL', 'S10', 'ARLA', 'OUTRO']).optional(),
   tipo_veiculo: z.enum(['TRUCADO', 'TOCO', 'CARRETA', 'BITREM', 'RODOTREM']),
@@ -197,7 +197,7 @@ export const CriarCaminhaoSchema = z.object({
   registro_antt: z.string().optional(),
   validade_seguro: z.string().optional(),
   validade_licenciamento: z.string().optional(),
-  proprietario_tipo: z.enum(['PROPRIO', 'TERCEIRO', 'AGREGADO']),
+  proprietario_tipo: z.enum(['PROPRIO', 'TERCEIRO', 'AGREGADO']).optional(),
   ultima_manutencao_data: z.string().optional(),
   proxima_manutencao_km: z.number().int().nonnegative().optional(),
 });
@@ -290,7 +290,10 @@ export type AtualizarFreteInput = z.infer<typeof AtualizarFreteSchema>;
 export const CriarFazendaSchema = z.object({
   id: IdSchema.optional(),
   fazenda: z.string().min(3),
-  localizacao: z.string().min(3),
+  estado: z.preprocess(
+    (v) => (typeof v === 'string' ? v.trim().toUpperCase() : v),
+    z.enum(['SP', 'MS', 'MT'])
+  ),
   proprietario: z.string().min(3),
   mercadoria: z.string().min(1),
   variedade: z.string().optional(),
@@ -373,56 +376,3 @@ export const AtualizarPagamentoSchema = CriarPagamentoSchema.partial().refine(
 );
 
 export type AtualizarPagamentoInput = z.infer<typeof AtualizarPagamentoSchema>;
-
-// ==================== NOTA FISCAL ====================
-export const CriarNotaFiscalSchema = z.object({
-  id: IdSchema.optional(),
-  frete_id: IdSchema,
-  motorista_id: IdSchema,
-  numero_nf: z.number().int().positive(),
-  serie_nf: z.string().min(1).optional(),
-  data_emissao: z.string().min(1),
-  data_saida: z.string().optional(),
-  data_entrega: z.string().optional(),
-  mercadoria: z.string().min(1),
-  quantidade_sacas: z.number().int().positive(),
-  toneladas: z.number().positive(),
-  origem: z.string().min(2),
-  destino: z.string().min(2),
-  valor_bruto: z.number().positive(),
-  icms_aliquota: z.number().positive().optional(),
-  icms_valor: z.number().nonnegative().optional(),
-  valor_liquido: z.number().nonnegative().optional(),
-  status: z.enum(['emitida', 'cancelada', 'devolvida']).optional(),
-  chave_acesso: z.string().length(44).optional(),
-  arquivo_pdf: z.string().optional(),
-  arquivo_xml: z.string().optional(),
-  observacoes: z.string().optional(),
-});
-
-export type CriarNotaFiscalInput = z.infer<typeof CriarNotaFiscalSchema>;
-
-export const AtualizarNotaFiscalSchema = CriarNotaFiscalSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'Informe ao menos um campo para atualizar' }
-);
-
-export type AtualizarNotaFiscalInput = z.infer<typeof AtualizarNotaFiscalSchema>;
-
-// ==================== LOCAIS DE ENTREGA ====================
-export const CriarLocalEntregaSchema = z.object({
-  id: IdSchema.optional(),
-  nome: z.string().min(3),
-  cidade: z.string().min(2),
-  estado: z.string().length(2),
-  ativo: z.boolean().optional(),
-});
-
-export type CriarLocalEntregaInput = z.infer<typeof CriarLocalEntregaSchema>;
-
-export const AtualizarLocalEntregaSchema = CriarLocalEntregaSchema.partial().refine(
-  (data) => Object.keys(data).length > 0,
-  { message: 'Informe ao menos um campo para atualizar' }
-);
-
-export type AtualizarLocalEntregaInput = z.infer<typeof AtualizarLocalEntregaSchema>;
